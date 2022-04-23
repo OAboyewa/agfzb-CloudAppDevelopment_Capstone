@@ -23,6 +23,11 @@ def get_request(url, **kwargs):
 
 # Create a `post_request` to make HTTP POST requests
 # e.g., response = requests.post(url, params=kwargs, json=payload)
+def post_request(url, json_payload, **kwargs):
+    response = requests.post(url, params=kwargs, json=payload)
+    status_code = response.status_code
+    json_data = json.loads(response.text)
+    return json_data
 
 
 # Create a get_dealers_from_cf method to get dealers from a cloud function
@@ -59,21 +64,28 @@ def get_dealer_reviews_from_cf(url, dealerId):
     results = []
 
     json_result = get_request(url, dealerId=dealerId)
-    print(json_result)
 
     if json_result:
-        # Get the row list in JSON as dealers
+        
         dealers = json_result["body"]["data"]["docs"]
-        # For each dealer object
+        
         for dealer in dealers:
-            # Get its content in `doc` object
+            
             dealer_doc = dealer
-            # Create a DealerReview object with values in `doc` object
+
             dealer_obj = DealerReview (id=dealer_doc["id"], dealership=dealer_doc["dealership"],
-                name=dealer_doc["name"], purchase=dealer_doc["purchase"], review=dealer_doc["review"],
-                purchase_date=dealer_doc["purchase_date"], car_make=dealer_doc["car_make"], 
-                car_model=dealer_doc["car_model"], car_year=dealer_doc["car_year"], 
-                sentiment=dealer_doc["review"])
+                name=dealer_doc["name"], purchase=dealer_doc["purchase"], review=dealer_doc["review"])
+
+            if "purchase_date" in dealer_doc:
+                dealer_obj.purchase_date = dealer_doc["purchase_date"]
+            if "car_make" in dealer_doc:
+                dealer_obj.car_make = dealer_doc["car_make"]
+            if "car_model" in dealer_doc:
+                dealer_obj.car_model = dealer_doc["car_model"]
+            if "car_year" in dealer_doc:
+                dealer_obj.car_year = dealer_doc["car_year"]
+            if "review" in dealer_doc:
+                dealer_obj.sentiment = dealer_doc["review"]
 
             results.append(dealer_obj)
 
